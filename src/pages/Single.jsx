@@ -1,37 +1,112 @@
-// Import necessary hooks and components from react-router-dom and other libraries.
-import { Link, useParams } from "react-router-dom";  // To use link for navigation and useParams to get URL parameters
-import PropTypes from "prop-types";  // To define prop types for this component
-import rigoImageUrl from "../assets/img/rigo-baby.jpg"  // Import an image asset
-import useGlobalReducer from "../hooks/useGlobalReducer";  // Import a custom hook for accessing the global state
+import { useParams, useNavigate } from "react-router-dom";
+import useGlobalReducer from "../hooks/useGlobalReducer";
 
-// Define and export the Single component which displays individual item details.
-export const Single = props => {
-  // Access the global state using the custom hook.
-  const { store } = useGlobalReducer()
+export const Single = () => {
+    const { store, dispatch } = useGlobalReducer();
+    const { type, uid } = useParams();
+    const navigate = useNavigate();
 
-  // Retrieve the 'theId' URL parameter using useParams hook.
-  const { theId } = useParams()
-  const singleTodo = store.todos.find(todo => todo.id === parseInt(theId));
+    const getItem = () => {
+        if (type === "people") return store.people.find((p) => p.uid === uid);
+        if (type === "vehicles") return store.vehicles.find((v) => v.uid === uid);
+        if (type === "planets") return store.planets.find((pl) => pl.uid === uid);
+        return null;
+    };
 
-  return (
-    <div className="container text-center">
-      {/* Display the title of the todo element dynamically retrieved from the store using theId. */}
-      <h1 className="display-4">Todo: {singleTodo?.title}</h1>
-      <hr className="my-4" />  {/* A horizontal rule for visual separation. */}
+    const item = getItem();
 
-      {/* A Link component acts as an anchor tag but is used for client-side routing to prevent page reloads. */}
-      <Link to="/">
-        <span className="btn btn-primary btn-lg" href="#" role="button">
-          Back home
-        </span>
-      </Link>
-    </div>
-  );
-};
+    const isFavorite = store.favorites.some(
+        (fav) => fav.uid === uid && fav.type === type
+    );
 
-// Use PropTypes to validate the props passed to this component, ensuring reliable behavior.
-Single.propTypes = {
-  // Although 'match' prop is defined here, it is not used in the component.
-  // Consider removing or using it as needed.
-  match: PropTypes.object
+    const toggleFavorite = () => {
+        if (isFavorite) {
+            dispatch({ type: "remove_favorite", payload: { uid, type } });
+        } else {
+            dispatch({ type: "add_favorite", payload: { uid, type, name: item.name } });
+        }
+    };
+
+    const getFields = () => {
+        if (type === "people") return [
+            ["Año de nacimiento", item.birth_year],
+            ["Género", item.gender],
+            ["Altura", item.height],
+            ["Peso", item.mass],
+            ["Color de cabello", item.hair_color],
+            ["Color de ojos", item.eye_color],
+        ];
+        if (type === "vehicles") return [
+            ["Modelo", item.model],
+            ["Clase", item.vehicle_class],
+            ["Fabricante", item.manufacturer],
+            ["Longitud", item.length],
+            ["Tripulación", item.crew],
+            ["Pasajeros", item.passengers],
+        ];
+        if (type === "planets") return [
+            ["Clima", item.climate],
+            ["Terreno", item.terrain],
+            ["Población", item.population],
+            ["Diámetro", item.diameter],
+            ["Gravedad", item.gravity],
+            ["Agua superficial", item.surface_water],
+        ];
+    };
+
+    if (!item) return (
+        <div className="d-flex justify-content-center align-items-center vh-100 bg-dark">
+            <div className="spinner-border text-warning" />
+        </div>
+    );
+
+    return (
+        <div className="bg-dark min-vh-100 py-5 px-4">
+            <button className="btn btn-outline-warning mb-4" onClick={() => navigate(-1)}>
+                ← Volver
+            </button>
+
+            <div className="rounded overflow-hidden border border-secondary" style={{ maxWidth: "1000px", margin: "0 auto" }}>
+                <div className="row g-0">
+                    <div className="col-md-5">
+                        {item.image ? (
+                            <img
+                                src={item.image}
+                                alt={item.name}
+                                className="w-100 h-100"
+                                style={{ objectFit: "cover", minHeight: "350px" }}
+                            />
+                        ) : (
+                            <div className="card-img-placeholder h-100" style={{ minHeight: "350px" }}>
+                                ⭐ {item.name}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="col-md-7 bg-dark p-4 text-white">
+                        <div className="d-flex justify-content-between align-items-start mb-3">
+                            <h1 className="text-uppercase fw-bold" style={{ letterSpacing: "0.1rem" }}>
+                                {item.name}
+                            </h1>
+                            <button
+                                className={`btn btn-sm ${isFavorite ? "btn-warning" : "btn-outline-warning"}`}
+                                onClick={toggleFavorite}
+                            >
+                                {isFavorite ? "❤️ Guardado" : "🤍 Guardar"}
+                            </button>
+                        </div>
+
+                        <div className="row mt-3">
+                            {getFields().map(([label, value]) => (
+                                <div key={label} className="col-6 mb-3">
+                                    <p className="text-secondary mb-0 small text-uppercase">{label}</p>
+                                    <p className="fw-bold mb-0">{value || "desconocido"}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 };

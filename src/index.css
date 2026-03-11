@@ -1,0 +1,11 @@
+.card-img-placeholder {
+  height: 200px;
+  background-color: #1a1a2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffc107;
+  font-size: 0.95rem;
+  text-align: center;
+  padding: 10px;
+}
